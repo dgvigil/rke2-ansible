@@ -65,7 +65,7 @@ jobs:
       - name: did we get the stuff
         shell: bash
         run: |
-          echo "the results are: ${{ steps.rke2-ansible-cd-stack.output }}"
+          echo "the results are: ${{ steps.rke2-ansible-cd-stack.outputs }}"
 
       - name: Delete Stack
         if: ${{ always() }}
