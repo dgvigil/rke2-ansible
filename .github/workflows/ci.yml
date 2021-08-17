@@ -63,7 +63,9 @@ jobs:
           template: testing/template.yml
 
       - name: did we get the stuff
-        run: echo "the results are: ${{ steps.rke2-ansible-cd-stack.outcome }}"
+        shell: bash
+        run: |
+          echo "the results are: ${{ steps.rke2-ansible-cd-stack.outcome }}"
 
       - name: Delete Stack
         if: ${{ always() }}
