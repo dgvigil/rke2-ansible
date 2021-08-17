@@ -4,10 +4,14 @@ name: CI
 on:
   pull_request:
   push:
+  workflow_dispatch:
+
+env:
+  StackName: ${GITHUB_JOB}
 
 jobs:
 
-  test:
+  lint-test:
     name: Lint
     runs-on: ubuntu-latest
 
@@ -34,4 +38,38 @@ jobs:
 
       - name: Run ansible-lint.
         run: ansible-lint
+
+  build-test:
+    name: Initial build test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the codebase.
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        id: creds
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-gov-west-1
+
+      - name: Deploy CloudFormation Stacks
+        id: rke2-ansible-cf-stack
+        uses: aws-actions/aws-cloudformation-github-deploy@v1.0.3
+        with:
+          name:  rke2-ansible-cf-stack-${GITHUB_JOB}
+          template: testing/template.yml
+
+      - uses: actions/github-script@0.9.0
+        with:
+          script: |
+            echo "${{ steps.rke2-ansible-cd-stack.outcome }}"
+
+      - name: Delete Stack
+        if: ${{ always() }}
+        run: |
+          aws cloudformation delete-stack --stack-name rke2-ansible-cf-stack-${GITHUB_JOB};
+          aws cloudformation wait stack-delete-complete --stack-name rke2-ansible-cf-stack-${GITHUB_JOB};
 
